@@ -13,7 +13,7 @@ add_executable(
         ${HEADER_FILES}
 )
 
-set_property( TARGET OrderedVisitor PROPERTY CXX_STANDARD 17 )
+set_property( TARGET OrderedVisitor PROPERTY CXX_STANDARD 20 )
 include_directories( ${PROJECT_ROOT_DIR} )
 
 # Project libraries

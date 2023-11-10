@@ -3,60 +3,85 @@
 class Visitor
 {
     public:
-        virtual void VisitStep1() = 0;
-        virtual void VisitStep2() = 0;
-        virtual void VisitStep3() = 0;
+        virtual void EnterDomain( std::string const & inName ) = 0;
+        virtual void ExitDomain( std::string const & inName ) = 0;
 };
 
 class VisitorImpl
     : public Visitor
 {
     public:
-        void VisitStep1() override
+        void EnterDomain( std::string const & inName ) override
         {
-            std::cout << "Visited Step 1" << std::endl;
+            for( int i = 0; i < mIndentationLevel; ++i ) std::cout << "  ";
+            std::cout << "Enter: " << inName << std::endl;
+            mIndentationLevel++;
         }
 
-        void VisitStep2() override
+        void ExitDomain( std::string const & inName ) override
         {
-            std::cout << "Visited Step 2" << std::endl;
+            mIndentationLevel--;
+            for( int i = 0; i < mIndentationLevel; ++i ) std::cout << "  ";
+            std::cout << "Exit:  " << inName << std::endl;
         }
 
-        void VisitStep3() override
-        {
-            std::cout << "Visited Step 3" << std::endl;
-        }
+    private:
+        std::size_t mIndentationLevel{ 0 };
 };
 
 class Domain
 {
     public:
-        void Accept( Visitor & inVisitor, bool inReverse = false )
+        Domain( std::string inName, bool inReverse = false )
+        : mName( inName ), mReverse( inReverse )
         {
-            if( !inReverse )
+        }
+
+        void AddSubDomain( Domain const & inSubDomain )
+        {
+            mSubDomains.push_back( inSubDomain );
+        }
+
+        void Accept( Visitor & inVisitor )
+        {
+            inVisitor.EnterDomain( mName );
+            if( mReverse )
             {
-                inVisitor.VisitStep1();
-                inVisitor.VisitStep2();
-                inVisitor.VisitStep3();
+                for( auto it = mSubDomains.rbegin(); it != mSubDomains.rend(); ++it )
+                {
+                    it->Accept( inVisitor );
+                }
             }
             else
             {
-                inVisitor.VisitStep3();
-                inVisitor.VisitStep2();
-                inVisitor.VisitStep1();
+                for( auto it = mSubDomains.begin(); it != mSubDomains.end(); ++it )
+                {
+                    it->Accept( inVisitor );
+                }
             }
+            inVisitor.ExitDomain( mName );
         }
+
+    private:
+        std::string mName;
+        bool mReverse{ false };
+        std::vector< Domain > mSubDomains;
 };
 
 int main()
 {
-    Domain theDomain;
+    Domain theDomain( "root" );
+    theDomain.AddSubDomain( Domain( "A" ) );
+    theDomain.AddSubDomain( Domain( "B" ) );
+
+    Domain theSubDomain( "C", false );
+    theSubDomain.AddSubDomain( Domain( "D" ) );
+    theSubDomain.AddSubDomain( Domain( "E" ) );
+    theSubDomain.AddSubDomain( Domain( "F" ) );
+    theDomain.AddSubDomain( theSubDomain );
 
     VisitorImpl theVisitor;
-    std::cout << "Regular order" << std::endl;
     theDomain.Accept( theVisitor );
     std::cout << std::endl;
 
-    std::cout << "Reversed order" << std::endl;
-    theDomain.Accept( theVisitor, true );
 }
